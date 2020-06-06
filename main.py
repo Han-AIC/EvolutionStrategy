@@ -15,3 +15,26 @@
        Training_Details, and Evaluation_Performance of the best members in the
        GeneRecord in a running .CSV, using Record.py
 '''
+
+'''
+
+    Structure of a Gene
+
+        [Meta Component][[Model_Components_1...N], [Model_Components_1...N] ... Layer N]
+
+'''
+
+'''
+
+    Minimum Viable Product
+
+        Produce a population of genes. Meta component restricted to LR, choice
+        of optimizer, None or Full BatchNorm, number of layers, number of
+        components per layer. Model Components chosen from FC,Conv1D, Conv2D,
+        predefined blocks. Train on MNIST, Evaluate population. Train/Test Split
+        of 30/70 seems reasonable. Save best performing genes to Gene Record.
+        This is one population cycle.
+
+        Consider a multi-armed bandit controller for Gene Selection.
+
+'''
