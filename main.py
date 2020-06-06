@@ -38,3 +38,14 @@
         Consider a multi-armed bandit controller for Gene Selection.
 
 '''
+
+'''
+
+    Major Challenges:
+
+        1. Layer input/output adaptors. How do we feed variable sized inputs
+           to several different layer types simultaneously? How do we connect
+           a conv2D component to an FCNN to a Conv1D to a Conv2D again?
+        2. Input and output should be fixed.
+
+'''
