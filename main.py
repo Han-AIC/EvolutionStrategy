@@ -49,3 +49,8 @@
         2. Input and output should be fixed.
 
 '''
+import numpy as np
+from Spawn import Spawner
+
+test = Spawner()
+print(test.spawn_single_progenitor())
