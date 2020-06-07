@@ -74,11 +74,11 @@ testing_dataset = torch.utils.data.TensorDataset(testing_dataset[0], testing_dat
 trainloader = torch.utils.data.DataLoader(training_datasets, batch_size=45)
 testloader = torch.utils.data.DataLoader(testing_dataset, batch_size=45)
 
-test_spawner = Spawner()
+test_spawner = Spawner(INPUT_DIM, OUTPUT_DIM)
 test_gene = test_spawner.spawn_single_progenitor()
-test_components = Component_Specs()
-test_assembler = Assembler(test_components.return_component_mappings())
-assembled_components = test_assembler.assemble_components(test_gene, (INPUT_DIM,), (OUTPUT_DIM,))
+# test_components = Component_Specs()
+# test_assembler = Assembler(test_components.return_component_mappings())
+# assembled_components = test_assembler.assemble_components(test_gene, (INPUT_DIM,), (OUTPUT_DIM,))
 
 # test_assembler.insert_size_adapters(assembled_components, (INPUT_DIM,), (OUTPUT_DIM,))
 

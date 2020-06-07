@@ -35,11 +35,11 @@ class Spawner:
                                    2: 2,
                                    3: 3}
 
-        Model Component: {1: self._FCNN_8x8(),
-                          2: self._FCNN_16x16(),
-                          3: self._FCNN_32x32(),
-                          4: self._FCNN_64x64(),
-                          5: self._FCNN_128x128()}
+        Model Component: {1: 8,
+                          2: 16,
+                          3: 32,
+                          4: 64,
+                          5: 128}
 
         Activation per Component: {1: relu,
                                    2: sigmoid}
@@ -59,8 +59,9 @@ class Spawner:
 
         Component Size Modifier, Batchnorms on random subsets
     '''
-    def __init__(self):
-        pass
+    def __init__(self, INPUT_DIM, OUTPUT_DIM):
+        self.INPUT_DIM = INPUT_DIM
+        self.OUTPUT_DIM = OUTPUT_DIM
 
     def spawn_single_progenitor(self):
         self._reset_random_seed()
@@ -74,13 +75,12 @@ class Spawner:
 
         for layer_idx in range(num_layers):
             num_components = self._num_components_per_layer()
-            dropout_p = self._dropout_p_per_component()
             layers[str(layer_idx)] = {"num_components": num_components,
-                                      "components": [],
-                                      "dropout_p": dropout_p}
+                                      "components": []}
             for component_idx in range(num_components):
-                component = self._select_component()
+                component = self._select_component_size()
                 activation = self._select_activation()
+                dropout_p = self._dropout_p_per_component()
                 layers[str(layer_idx)]["components"].append((component, activation))
 
         gene["learning_rate"] = LR
@@ -130,7 +130,7 @@ class Spawner:
                                  13, 14],
                                  p=probs)
 
-    def _select_component(self,
+    def _select_component_size(self,
                           probs=[0.2, 0.2, 0.2, 0.2, 0.2]):
         return np.random.choice([1, 2, 3, 4, 5],
                                 p=probs)
