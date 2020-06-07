@@ -35,10 +35,14 @@ class Spawner:
                                    2: 2,
                                    3: 3}
 
-        Model Component: {1: FCNN_64x64_ReLu,
-                          2: FCNN_64x64_Sigmoid,
-                          3: Cnv1D_64_64_3,
-                          4: Cnv2D_64_64_3}
+        Model Component: {1: self._FCNN_8x8(),
+                          2: self._FCNN_16x16(),
+                          3: self._FCNN_32x32(),
+                          4: self._FCNN_64x64(),
+                          5: self._FCNN_128x128()}
+
+        Activation per Component: {1: relu,
+                                   2: sigmoid}
 
         Dropout Level: {1: 0.01,
                         2: 0.1,
@@ -76,7 +80,8 @@ class Spawner:
                                       "dropout_p": dropout_p}
             for component_idx in range(num_components):
                 component = self._select_component()
-                layers[str(layer_idx)]["components"].append(component)
+                activation = self._select_activation()
+                layers[str(layer_idx)]["components"].append((component, activation))
 
         gene["learning_rate"] = LR
         gene["optimizer"] = optimizer
@@ -126,6 +131,11 @@ class Spawner:
                                  p=probs)
 
     def _select_component(self,
-                          probs=[0.25, 0.25, 0.25, 0.25]):
-        return np.random.choice([1, 2, 3, 4],
+                          probs=[0.2, 0.2, 0.2, 0.2, 0.2]):
+        return np.random.choice([1, 2, 3, 4, 5],
+                                p=probs)
+
+    def _select_activation(self,
+                          probs=[0.5, 0.5]):
+        return np.random.choice([1, 2],
                                 p=probs)

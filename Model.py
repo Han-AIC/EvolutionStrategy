@@ -71,20 +71,4 @@ class Model(nn.Module):
           else:
               x = layer_activation_tuple[1](current_layer(x))
       return x
-
-class DuelingQ(nn.Module):
-  def __init__(self,
-               prime_structure,
-               value_structure,
-               advantage_structure):
-    super(DuelingQ, self).__init__()
-    self.prime_model = Model(prime_structure)
-    self.value_model = Model(value_structure)
-    self.advantage_model = Model(advantage_structure)
-
-  def forward(self, x):
-    x = self.prime_model(x)
-    value = self.value_model(x)
-    advantage = self.advantage_model(x)
-    Q = value + (advantage - advantage.mean())
-    return Q
+      

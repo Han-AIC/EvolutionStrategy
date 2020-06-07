@@ -50,16 +50,43 @@
 
 '''
 import numpy as np
+import torch
+# import torch.utils.data.DataLoader as DataLoader
+
 from Spawn import Spawner
 from Assemble import Assembler
 from Components import Component_Specs
 
+from synth_data_prep import *
+BASE_PATH =  './data'
+
+train_path = BASE_PATH + '/data.json'
+test_path = BASE_PATH + '/test_data.json'
+training_datasets = prep_synth_data(train_path)[0]
+testing_dataset = prep_synth_test_data(test_path)
+
+INPUT_DIM = training_datasets[0].shape[1]
+OUTPUT_DIM = 5
+
+training_datasets = torch.utils.data.TensorDataset(training_datasets[0], training_datasets[1].float())
+testing_dataset = torch.utils.data.TensorDataset(testing_dataset[0], testing_dataset[1].float())
+
+trainloader = torch.utils.data.DataLoader(training_datasets, batch_size=45)
+testloader = torch.utils.data.DataLoader(testing_dataset, batch_size=45)
+
 test_spawner = Spawner()
 test_gene = test_spawner.spawn_single_progenitor()
-
 test_components = Component_Specs()
-# print(test_components.LR_Mapping)
-
 test_assembler = Assembler(test_components.return_component_mappings())
+assembled_components = test_assembler.assemble_components(test_gene)
 
-test_assembler.assemble(test_gene)
+test_assembler.insert_size_adapters(assembled_components, (INPUT_DIM,), (OUTPUT_DIM,))
+
+# print(assembled_components)
+# test_components = Component_Specs()
+# # print(test_components.LR_Mapping)
+#
+# test_assembler = Assembler(test_components.return_component_mappings())
+#
+# assembled_components = test_assembler.assemble_components(test_gene)
+# test_assembler.insert_size_adapters(assembled_components, (INPUT_DIM,), (OUTPUT_DIM,))

@@ -2,6 +2,8 @@ from collections import defaultdict
 import numpy as np
 
 from Model import Model
+import torch
+import torch.autograd as autograd
 '''
 
     Structure of a Gene
@@ -31,7 +33,13 @@ from Model import Model
     component.
 
 '''
+def compute_out_size(in_size, mod):
+    """
+    Compute output size of Module `mod` given an input with size `in_size`.
+    """
 
+    f = mod.forward(autograd.Variable(torch.Tensor(1, *in_size)))
+    return int(np.prod(f.size()[1:]))
 
 class Assembler:
     '''
@@ -40,15 +48,63 @@ class Assembler:
     def __init__(self, component_specs):
         self.component_specs = component_specs
 
-    def assemble(self, gene):
+    def assemble_components(self, gene):
         model_array = []
-        for layer_set in gene["layers"]:
-            layer_set_array = []
-            for component_idx in gene["layers"][layer_set]['components']:
-                # print(component_idx)
-                component = self.component_specs["COMPONENT_Mapping"][component_idx]
-                # print(component)
-                # print(Model(component))
-                layer_set_array.append(Model(component))
-            model_array.append(layer_set_array)
-        print(model_array)
+        for component_layer in gene["layers"]:
+            component_layer_array = []
+            for component_tuple in gene["layers"][component_layer]['components']:
+                component = self.component_specs["COMPONENT_Mapping"][component_tuple[0]]
+                activation = self.component_specs["ACTIVATION_Mapping"][component_tuple[1]]
+                component_name = list(component.keys())[0]
+                component[component_name].update({"activation": activation})
+                component_layer_array.append(Model(component))
+            model_array.append(component_layer_array)
+        return model_array
+
+    def insert_size_adapters(self, model_arr, input_dims, output_dims):
+        print(model_arr)
+        print(input_dims)
+        print(output_dims)
+        print("-------------")
+        for layer_components in model_arr:
+            print(layer_components)
+            # component_name = list(component.state_dict().keys())[0].split('.')[0]
+            # component_shape = component.state_dict()[list(component.state_dict().keys())[0]].shape
+
+            # print(component_name)
+            # if component_name == "FCNN":
+            #     print(component_shape)
+            # elif component_name == "CONV1D":
+            #     print(component_shape)
+            # elif component_name == "CONV2D":
+            #     print(component_shape)
+
+        # for component_layer in model_arr:
+        # #     print(component_layer)
+        # #     print("-------------")
+        #     for component in component
+        #     print(component.state_dict().keys())
+            # print(compute_out_size((64,64, 3), component))
+        # for component in model_arr[-1]:
+        #     print(component)
+
+
+# class Individual(nn.Module):
+#   def __init__(self,
+#                model_arr):
+#     super(Individual, self).__init__()
+#     self.model_arr = model_arr
+#
+#   def forward(self, x):
+#
+#     for component_layer in self.model_arr:
+#         intermediate_outputs = []
+#         for component in component_layer:
+#             intermediate_outputs.append(component(x))
+#
+#
+#     x = self.prime_model(x)
+#     value = self.value_model(x)
+#     advantage = self.advantage_model(x)
+#     Q = value + (advantage - advantage.mean())
+#     return Q
