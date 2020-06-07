@@ -78,9 +78,9 @@ test_spawner = Spawner()
 test_gene = test_spawner.spawn_single_progenitor()
 test_components = Component_Specs()
 test_assembler = Assembler(test_components.return_component_mappings())
-assembled_components = test_assembler.assemble_components(test_gene)
+assembled_components = test_assembler.assemble_components(test_gene, (INPUT_DIM,), (OUTPUT_DIM,))
 
-test_assembler.insert_size_adapters(assembled_components, (INPUT_DIM,), (OUTPUT_DIM,))
+# test_assembler.insert_size_adapters(assembled_components, (INPUT_DIM,), (OUTPUT_DIM,))
 
 # print(assembled_components)
 # test_components = Component_Specs()

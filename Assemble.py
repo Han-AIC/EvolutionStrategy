@@ -48,24 +48,49 @@ class Assembler:
     def __init__(self, component_specs):
         self.component_specs = component_specs
 
-    def assemble_components(self, gene):
+    def assemble_components(self, gene, input_dims, output_dims):
+        print("-----------")
+        print(gene)
+        print(input_dims)
+        print(output_dims)
         model_array = []
+        size_array = [[input_dims]]
         for component_layer in gene["layers"]:
             component_layer_array = []
+            component_output_size_array = []
             for component_tuple in gene["layers"][component_layer]['components']:
                 component = self.component_specs["COMPONENT_Mapping"][component_tuple[0]]
                 activation = self.component_specs["ACTIVATION_Mapping"][component_tuple[1]]
                 component_name = list(component.keys())[0]
+                component_output_size_array.append(component[component_name]["layer_size_mapping"]["out_features"])
+                component[component_name].update({"in_features": activation})
                 component[component_name].update({"activation": activation})
-                component_layer_array.append(Model(component))
-            model_array.append(component_layer_array)
-        return model_array
+                
+            size_array.append(component_output_size_array)
+        print(size_array)
+        # model_array = []
+        # for component_layer in gene["layers"]:
+        #     component_layer_array = []
+        #     for component_tuple in gene["layers"][component_layer]['components']:
+        #         component = self.component_specs["COMPONENT_Mapping"][component_tuple[0]]
+        #         activation = self.component_specs["ACTIVATION_Mapping"][component_tuple[1]]
+        #
+        #
+        #
+        #
+        #         component_name = list(component.keys())[0]
+        #         component[component_name].update({"activation": activation})
+        #         component_layer_array.append(Model(component))
+        #     model_array.append(component_layer_array)
+        # return model_array
 
     def insert_size_adapters(self, model_arr, input_dims, output_dims):
         print(model_arr)
         print(input_dims)
         print(output_dims)
         print("-------------")
+
+        processed_model_arr = []
         for layer_components in model_arr:
             print(layer_components)
             # component_name = list(component.state_dict().keys())[0].split('.')[0]
