@@ -1,6 +1,7 @@
 import torch
 import random
 import numpy as np
+import gym
 
 class Environment:
 
@@ -9,10 +10,10 @@ class Environment:
         self.env = gym.make('CartPole-v1')
         self.env.seed(random.randint(0, 99999))
         self.current_state = self.env.reset()
-        self.state_shape = env.observation_space.shape
-        self.action_shape = env.action_space.n
+        self.state_shape = self.env.observation_space.shape
+        self.action_shape = self.env.action_space.n
 
-    def select_action_from_policy(self):
+    def select_action_from_policy(self, state):
         state = torch.from_numpy(state).float()
         action_probabilities = torch.softmax(self.model(state), dim = 0)
         action_probabilities = action_probabilities.detach().numpy()
@@ -20,8 +21,8 @@ class Environment:
 
     def reset(self):
         self.env.seed(random.randint(0, 99999))
-        return env.reset()
+        return self.env.reset()
 
-    def step(self):
-        next_state, reward, done, info = env.step(action)
+    def step(self, action):
+        next_state, reward, done, info = self.env.step(action)
         return next_state, reward, done, info
