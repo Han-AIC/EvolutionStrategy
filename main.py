@@ -51,6 +51,15 @@
 '''
 import numpy as np
 from Spawn import Spawner
+from Assemble import Assembler
+from Components import Component_Specs
 
-test = Spawner()
-print(test.spawn_single_progenitor())
+test_spawner = Spawner()
+test_gene = test_spawner.spawn_single_progenitor()
+
+test_components = Component_Specs()
+# print(test_components.LR_Mapping)
+
+test_assembler = Assembler(test_components.return_component_mappings())
+
+test_assembler.assemble(test_gene)

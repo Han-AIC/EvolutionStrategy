@@ -1,5 +1,7 @@
-
+from collections import defaultdict
 import numpy as np
+
+from Model import Model
 '''
 
     Structure of a Gene
@@ -35,12 +37,18 @@ class Assembler:
     '''
         The Assembler Class
     '''
-    def __init__(self):
-        pass
+    def __init__(self, component_specs):
+        self.component_specs = component_specs
 
-class Decoder:
-    '''
-        The Assembler Class
-    '''
-    def __init__(self):
-        pass
+    def assemble(self, gene):
+        model_array = []
+        for layer_set in gene["layers"]:
+            layer_set_array = []
+            for component_idx in gene["layers"][layer_set]['components']:
+                # print(component_idx)
+                component = self.component_specs["COMPONENT_Mapping"][component_idx]
+                # print(component)
+                # print(Model(component))
+                layer_set_array.append(Model(component))
+            model_array.append(layer_set_array)
+        print(model_array)
