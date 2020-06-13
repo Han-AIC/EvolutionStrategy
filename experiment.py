@@ -72,7 +72,6 @@ class EvoStrat_Experiment:
         environment = Environment(current_member)
         reward_window = deque(maxlen=10)
         for episode_idx in range(1, self.num_episodes+1):
-            # print("\rEpisode {} of {}".format(episode_idx, self.num_episodes), end="")
             state = environment.reset()
             action = environment.select_action_from_policy(state)
             reward_per_episode = 0
@@ -85,8 +84,6 @@ class EvoStrat_Experiment:
                 if done:
                     reward_window.append(reward_per_episode)
                     break
-            # if episode_idx % 10 == 0:
-                # print("\rAverage reward: {} by episode: {}".format(np.mean(reward_window), episode_idx))
         self.population_performance[gen_idx][population_idx][member_idx] = np.mean(reward_window)
 
     def calculate_population_means(self,
