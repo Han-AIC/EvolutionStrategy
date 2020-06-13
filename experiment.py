@@ -19,7 +19,8 @@ from collections import defaultdict
 
 class EvoStrat_Experiment:
 
-    def __init__(self, env_name):
+    def __init__(self,
+                 env_name):
 
         self.STATE_SPACE = gym.make(env_name).observation_space.shape[0]
         self.ACTION_SPACE = gym.make(env_name).action_space.n
@@ -36,18 +37,43 @@ class EvoStrat_Experiment:
         self.progenitor_mean_sigma = defaultdict()
         self.populations = defaultdict()
 
-        self._declare_initial_progenitor_means()
+        self._generate_first_population()
 
-    def generate_population(self, gen_idx):
+    def calculate_population_means(self,
+                                   gen_idx,
+                                   population_idx):
+        mean_state_dict = self._prep_base_state_dict()
+        current_population = self.populations[gen_idx][population_idx]
+        for member_idx in current_population:
+            current_model_state = current_population[member_idx].state_dict()
+            for layer in current_model_state:
+                mean_state_dict[layer] += current_model_state[layer]
+        for layer in mean_state_dict:
+            mean_state_dict[layer] /= len(current_population.keys())
+        return mean_state_dict
+
+    def calculate_populate_covariances(self,
+                                       gen_idx,
+                                       population_idx,
+                                       means):
+        print(means)
+
+    def _prep_base_state_dict(self):
+        base_state_dict = self.populations[0][0][0].state_dict()
+        for layer in base_state_dict:
+            zeroes = torch.from_numpy(np.zeros(base_state_dict[layer].shape))
+            base_state_dict.update({layer: zeroes})
+        return base_state_dict
+
+    def _generate_first_population(self):
+        self._bin_param_space(0, 0.1)
+        gen_idx = 0
         self.populations[gen_idx] = defaultdict()
         for progenitor in self.progenitor_mean_sigma[gen_idx]:
             mean = self.progenitor_mean_sigma[gen_idx][progenitor][0]
             std = self.progenitor_mean_sigma[gen_idx][progenitor][1]
             population = self.spawner.generate_population(mean, std)
             self.populations[gen_idx][progenitor] = population
-
-    def _declare_initial_progenitor_means(self):
-        self._bin_param_space(0, 0.1)
 
     def _bin_param_space(self, gen_idx, step_size):
         self.progenitor_mean_sigma[gen_idx] = defaultdict()
