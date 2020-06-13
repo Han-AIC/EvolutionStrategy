@@ -1,3 +1,5 @@
+import torch
+import numpy as np
 from model import Model
 
 class Spawner:
@@ -16,9 +18,20 @@ class Spawner:
                                    "layer_type": "linear",
                                    "activation": "nil"}}
 
-    def generate_initial_progenitors(self):
+    def generate_population(self, mean, step_size):
         population = {}
         for i in range(self.pop_size):
-            single_progenitor = Model(self.model_structure)
-            population.update({i: single_progenitor})
+            member = Model(self.model_structure)
+            member = self.resample_member_state_dict(member, mean, step_size)
+            population.update({i: member})
         return population
+
+    def resample_member_state_dict(self, member, mean, step_size):
+        state_dict = member.state_dict()
+        for layer in state_dict:
+            if layer.split('.')[1] == 'weight':
+                shape = state_dict[layer].shape
+                sampled_weights = torch.from_numpy(np.random.normal(mean, step_size, shape))
+                state_dict.update({layer: sampled_weights})
+        member.load_state_dict(state_dict)
+        return member

@@ -33,16 +33,30 @@ class EvoStrat_Experiment:
                                self.STATE_SPACE,
                                self.ACTION_SPACE)
 
-        self.progenitors = defaultdict()
+        self.progenitor_mean_sigma = defaultdict()
         self.populations = defaultdict()
 
-        self.spawn_first_generation()
+        self._declare_initial_progenitor_means()
 
-    def spawn_first_generation(self):
-        self.progenitors[0] = self.spawner.generate_initial_progenitors()
+    def generate_population(self, gen_idx):
+        self.populations[gen_idx] = defaultdict()
+        for progenitor in self.progenitor_mean_sigma[gen_idx]:
+            mean = self.progenitor_mean_sigma[gen_idx][progenitor][0]
+            std = self.progenitor_mean_sigma[gen_idx][progenitor][1]
+            population = self.spawner.generate_population(mean, std)
+            self.populations[gen_idx][progenitor] = population
 
-    def return_progenitors(self):
-        return self.progenitors
+    def _declare_initial_progenitor_means(self):
+        self._bin_param_space(0, 0.1)
+
+    def _bin_param_space(self, gen_idx, step_size):
+        self.progenitor_mean_sigma[gen_idx] = defaultdict()
+        for i in range(1, self.num_progenitors + 1):
+            mean = -1 + ((2/(self.num_progenitors + 1)) * i)
+            self.progenitor_mean_sigma[gen_idx][i - 1] = (mean, step_size)
+
+    def return_progenitors_mean_sigma(self):
+        return self.progenitor_mean_sigma
 
     def return_populations(self):
         return self.populations

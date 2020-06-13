@@ -18,9 +18,29 @@ from experiment import EvoStrat_Experiment
 env_name = 'CartPole-v1'
 experiment = EvoStrat_Experiment(env_name)
 
+# print(experiment.return_progenitors_mean_sigma())
+
+experiment.generate_population(0)
+
+# print(experiment.return_populations()[0][0][0])
+# experiment.generate_population(0)
+# print(experiment.return_populations())
+
 # print(experiment.return_progenitors()[0][0].state_dict())
+
+print(experiment.return_populations()[0][4][1].state_dict())
+
+
+# for layer in experiment.return_populations()[0][0][0].state_dict():
+#     if layer.split('.')[1] == 'weight':
+#         shape = experiment.return_populations()[0][0][0].state_dict()[layer].shape
+#         sampled_weights = np.random.normal(-0.6, 0.1, shape)
+#         print(torch.from_numpy(sampled_weights).shape)
 # print('-------')
 # print(experiment.return_progenitors()[0][1].state_dict())
+# print(2/6)
+# print(np.arange(-1+(2/6), 1, (2/6)))
+
 
 # for gen_idx in range(GENERATIONS):
 #     for progenitor in progenitors:
