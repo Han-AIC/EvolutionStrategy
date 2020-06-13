@@ -29,9 +29,8 @@ class Spawner:
     def resample_member_state_dict(self, member, mean, step_size):
         state_dict = member.state_dict()
         for layer in state_dict:
-            if layer.split('.')[1] == 'weight':
-                shape = state_dict[layer].shape
-                sampled_weights = torch.from_numpy(np.random.normal(mean, step_size, shape))
-                state_dict.update({layer: sampled_weights})
+            shape = state_dict[layer].shape
+            sampled_weights = torch.from_numpy(np.random.normal(mean, step_size, shape))
+            state_dict.update({layer: sampled_weights})
         member.load_state_dict(state_dict)
         return member

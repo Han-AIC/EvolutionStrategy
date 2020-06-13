@@ -52,11 +52,51 @@ class EvoStrat_Experiment:
             mean_state_dict[layer] /= len(current_population.keys())
         return mean_state_dict
 
-    def calculate_populate_covariances(self,
+    def calculate_population_covariances(self,
                                        gen_idx,
                                        population_idx,
                                        means):
-        print(means)
+        covariance_state_dict = self._prep_base_state_dict()
+        current_population = self.populations[gen_idx][population_idx]
+
+        for layer in covariance_state_dict:
+            if layer.split('.')[1] == 'weight':
+                for i, param_arr in enumerate(covariance_state_dict[layer]):
+                    for j, param in enumerate(covariance_state_dict[layer][i]):
+                        covariance = self.get_covariances(layer,
+                                                          current_population,
+                                                          means,
+                                                          i,
+                                                          j)
+                        covariance_state_dict[layer][i][j] = covariance
+            else:
+                for i, param_arr in enumerate(covariance_state_dict[layer]):
+                    covariance = self.get_covariances(layer,
+                                                      current_population,
+                                                      means,
+                                                      i)
+                    covariance_state_dict[layer][i] = covariance
+        return covariance_state_dict
+
+    def get_covariances(self,
+                        layer,
+                        current_population,
+                        means,
+                        i,
+                        j=None):
+        sum = 0
+        num_members = len(current_population.keys())
+        for member_idx in current_population:
+            current_member_state = current_population[member_idx].state_dict()
+            if j is not None:
+                current_param = current_member_state[layer][i][j].item()
+                current_mean = means[layer][i][j].item()
+            else:
+                current_param = current_member_state[layer][i].item()
+                current_mean = means[layer][i].item()
+            sum += (current_param - current_mean)**2
+        return sum/num_members
+
 
     def _prep_base_state_dict(self):
         base_state_dict = self.populations[0][0][0].state_dict()
@@ -75,7 +115,9 @@ class EvoStrat_Experiment:
             population = self.spawner.generate_population(mean, std)
             self.populations[gen_idx][progenitor] = population
 
-    def _bin_param_space(self, gen_idx, step_size):
+    def _bin_param_space(self,
+                         gen_idx,
+                         step_size):
         self.progenitor_mean_sigma[gen_idx] = defaultdict()
         for i in range(1, self.num_progenitors + 1):
             mean = -1 + ((2/(self.num_progenitors + 1)) * i)
