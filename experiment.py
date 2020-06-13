@@ -44,8 +44,50 @@ class EvoStrat_Experiment:
 
         self.progenitor_mean_sigma = defaultdict()
         self.populations = defaultdict()
+        self.population_performance = defaultdict()
 
         self._generate_first_population()
+
+    def evaluate_one_generation(self,
+                                gen_idx):
+        self.population_performance[gen_idx] = defaultdict()
+        for population_idx in self.populations[gen_idx]:
+            self.evaluate_one_population(gen_idx,
+                                         population_idx)
+
+    def evaluate_one_population(self,
+                                gen_idx,
+                                population_idx):
+        self.population_performance[gen_idx][population_idx] = defaultdict()
+        for member_idx in self.populations[gen_idx][population_idx]:
+            self.evaluate_one_member(gen_idx,
+                                     population_idx,
+                                     member_idx)
+
+    def evaluate_one_member(self,
+                            gen_idx,
+                            population_idx,
+                            member_idx):
+        current_member = self.populations[gen_idx][population_idx][member_idx]
+        environment = Environment(current_member)
+        reward_window = deque(maxlen=10)
+        for episode_idx in range(1, self.num_episodes+1):
+            # print("\rEpisode {} of {}".format(episode_idx, self.num_episodes), end="")
+            state = environment.reset()
+            action = environment.select_action_from_policy(state)
+            reward_per_episode = 0
+            for i in range(self.MAX_STEPS):
+                next_state, reward, done, info = environment.step(action)
+                next_action = environment.select_action_from_policy(next_state)
+                action = next_action
+                state = next_state
+                reward_per_episode += reward
+                if done:
+                    reward_window.append(reward_per_episode)
+                    break
+            # if episode_idx % 10 == 0:
+                # print("\rAverage reward: {} by episode: {}".format(np.mean(reward_window), episode_idx))
+        self.population_performance[gen_idx][population_idx][member_idx] = np.mean(reward_window)
 
     def calculate_population_means(self,
                                    gen_idx,
@@ -136,49 +178,3 @@ class EvoStrat_Experiment:
 
     def return_populations(self):
         return self.populations
-
-    # def run_one_generation(self):
-    #     for progenitor in progenitors:
-    #         environment = Environment(progenitors[progenitor]["model"])
-    #         reward_window = deque(maxlen=20)
-    #         for episode_idx in range(1, num_episodes+1):
-    #             print("\rEpisode {} of {}".format(episode_idx, num_episodes), end="")
-    #             state = environment.reset()
-    #             action = environment.select_action_from_policy(state)
-    #             reward_per_episode = 0
-    #             for i in range(MAX_STEPS):
-    #                 next_state, reward, done, info = environment.step(action)
-    #                 next_action = environment.select_action_from_policy(next_state)
-    #                 action = next_action
-    #                 state = next_state
-    #                 reward_per_episode += reward
-    #                 if done:
-    #                     reward_window.append(reward_per_episode)
-    #                     break
-    #             if episode_idx % 10 == 0:
-    #                 print("\rAverage reward: {} by episode: {}".format(np.mean(reward_window), episode_idx))
-    #         progenitors[progenitor].update({"average_score": np.mean(reward_window)})
-
-    # for gen_idx in range(GENERATIONS):
-    #     for progenitor in progenitors:
-    #         environment = Environment(progenitors[progenitor]["model"])
-    #         reward_window = deque(maxlen=20)
-    #         for episode_idx in range(1, num_episodes+1):
-    #             print("\rEpisode {} of {}".format(episode_idx, num_episodes), end="")
-    #             state = environment.reset()
-    #             action = environment.select_action_from_policy(state)
-    #             reward_per_episode = 0
-    #             for i in range(MAX_STEPS):
-    #                 next_state, reward, done, info = environment.step(action)
-    #                 next_action = environment.select_action_from_policy(next_state)
-    #                 action = next_action
-    #                 state = next_state
-    #                 reward_per_episode += reward
-    #                 if done:
-    #                     reward_window.append(reward_per_episode)
-    #                     break
-    #             if episode_idx % 10 == 0:
-    #                 print("\rAverage reward: {} by episode: {}".format(np.mean(reward_window), episode_idx))
-    #         progenitors[progenitor].update({"average_score": np.mean(reward_window)})
-    #
-    # print(progenitors)

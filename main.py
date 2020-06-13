@@ -33,8 +33,13 @@ experiment = EvoStrat_Experiment(env_name)
 means = experiment.calculate_population_means(0, 0)
 
 cov = experiment.calculate_population_covariances(0, 0, means)
-print(cov)
+# print(cov)
+#
+# print(experiment.progenitor_mean_sigma)
 
+experiment.evaluate_one_generation(0)
+
+print(experiment.population_performance)
 # for layer in experiment.return_populations()[0][0][0].state_dict():
 #     if layer.split('.')[1] == 'weight':
 #         shape = experiment.return_populations()[0][0][0].state_dict()[layer].shape
