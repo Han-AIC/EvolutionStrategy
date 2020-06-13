@@ -19,6 +19,14 @@ from collections import defaultdict
 
 class EvoStrat_Experiment:
 
+    """
+    1. Instantiates an environment for each population member to undergo evaluation.
+    2. Keeps track of states over time, selects actions probabilistically from the
+       output of each member model.
+    3. Steps environment forward using selected action.
+    4. Resets environment using a new novel random seed.
+    """
+
     def __init__(self,
                  env_name):
 
