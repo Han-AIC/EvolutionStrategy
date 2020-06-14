@@ -13,6 +13,11 @@ import copy
 import time
 import gc
 import json
+import copy
+
+from joblib import Parallel, delayed
+import multiprocessing
+
 
 from spawn import Spawner
 from environment import Environment
@@ -33,95 +38,71 @@ class EvoStrat_Experiment:
 
         self.STATE_SPACE = gym.make(env_name).observation_space.shape[0]
         self.ACTION_SPACE = gym.make(env_name).action_space.n
-        self.GENERATIONS = 1
-        self.MAX_STEPS = 500
-        self.num_episodes = 40
-        self.population_size = 2
-        self.mean_learning_rate = 0.5
+        self.GENERATIONS = 20
+        self.MAX_STEPS = 1000
+        self.num_episodes = 20
+        self.population_size = 200
+        self.elite_proportion = 0.1
+
+        self.lr_mean = 0.1
 
         self.spawner = Spawner(self.population_size,
                                self.STATE_SPACE,
                                self.ACTION_SPACE)
 
-        self.initial_progenitor_mean_sigma = defaultdict()
         self.populations = defaultdict()
         self.population_elites = defaultdict()
         self.population_performance = defaultdict()
-        # self.population_means = defaultdict()
-        self.population_covariances = defaultdict()
+        self.means = []
+        self.covs = []
 
     def run_experiment(self):
 
-        current_gen = 0
-        self.populations[current_gen] = self.spawner.generate_initial_population()
-        current_means = self.calculate_population_means(current_gen)
-        current_cov = self.calculate_population_covariances(current_gen, current_means)
-        self.evaluate_one_generation(current_gen)
-        print(self.population_performance)
-        self.select_top_performers(0, 0.5)
-        print(self.population_elites)
-        print("===========")
-        print(current_means)
-        next_means = self.calculate_next_means(current_gen, current_means)
-        print("==========")
-        print(next_means)
-        # print(self.population_means)
 
-        # print(current_means)
+        self.populations[0] = self.spawner.generate_initial_population()
 
-        # self.evaluate_one_generation(0)
-        # self.select_top_performers(0, 0.5)
+        current_means = self.calculate_population_means(0)
+        # current_cov = self.calculate_population_covariances(0, current_means)
 
-        # current_means = self.calculate_population_means(0, 0)
-        # current_cov = self.calculate_population_covariances(0, 0, current_means)
-        # self.population_means[0] = defaultdict()
-        # self.population_covariances[0] = defaultdict()
-        # self.population_means[0][0] = current_means
-        # self.population_covariances[0][0] = current_cov
-        #
-        # print(self.population_means[0][0])
-        # self.update_means(0)
-        # print("========")
-        # print(self.population_means[1][0])
+        for gen_idx in range(self.GENERATIONS):
+            self.means.append(current_means)
+            # self.covs.append(current_cov)
+            self.evaluate_one_generation(gen_idx)
+            self.select_top_performers(gen_idx, self.elite_proportion)
+            next_means = self.calculate_next_means(gen_idx, current_means)
+            self.populations[gen_idx + 1] = self.spawner.generate_population(next_means, 0)
+            # next_cov = self.calculate_population_covariances(gen_idx + 1, next_means)
+            # print("=========================")
+            # print(current_means)
+            # print("--------------------")
+            # print(next_means)
+            current_means = next_means
+            # print(self.average_elite_performance(gen_idx))
+            print('\rGeneration {}\tAverage Elite Score: {:.2f}\tAverage Whole Population Score: {:.2f}'.format(gen_idx, self.average_elite_performance(gen_idx), self.average_whole_performance(gen_idx)))
+            # print(self.means)
 
+    def average_elite_performance(self, gen_idx):
+        elites = self.population_elites[gen_idx]
+        return np.sum([x[1] for x in elites]) / len(elites)
 
-        # for gen_idx in range(0, self.GENERATIONS):
-        #     self.population_means[gen_idx] = defaultdict()
-        #     self.population_covariances[gen_idx] = defaultdict()
-        #
-        #     for population_idx in range(len(self.population_means[0].keys()))
-        #         self.population_means[gen_idx][population_idx] = current_means
-        #         self.population_covariances[gen_idx][population_idx] = current_cov
-
-
-        # print(self.population_means)
-
-
-        # for gen_idx in range(self.GENERATIONS):
-        #     self.evaluate_one_generation(gen_idx)
-
-
-        # means = self.calculate_population_means(0, 0)
-        #
-        # cov = self.calculate_population_covariances(0, 0, means)
-
-        # print(self.progenitor_mean_sigma)
-        # print(means)
-        # print(cov)
-
-        # for gen_idx in range(self.GENERATIONS):
-        #     self.evaluate_one_generation(gen_idx)
+    def average_whole_performance(self, gen_idx):
+        population = self.population_performance[gen_idx]
+        # print(population.values())
+        return np.sum(list(population.values())) / len(population)
 
     def calculate_next_means(self, gen_idx, current_means):
-        next_means = current_means
+        next_means = copy.deepcopy(current_means)
         mean_difference = self._prep_base_state_dict()
         for layer in mean_difference:
             current_elites = self.population_elites[gen_idx]
             for member_idx, _ in current_elites:
                 current_member_state = self.populations[gen_idx][member_idx].state_dict()
                 mean_difference[layer] += (current_member_state[layer] - current_means[layer])
-            mean_difference[layer] /= len(current_elites)
-            next_means[layer] += (self.mean_learning_rate * mean_difference[layer])
+            next_means[layer] += (self.lr_mean * mean_difference[layer])
+        # print("=========================")
+        # print(current_means)
+        # print("--------------------")
+        # print(next_means)
         return next_means
 
 
@@ -149,7 +130,7 @@ class EvoStrat_Experiment:
                             member_idx):
         current_member = self.populations[gen_idx][member_idx]
         environment = Environment(current_member)
-        reward_window = deque(maxlen=10)
+        reward_window = deque(maxlen=30)
         for episode_idx in range(1, self.num_episodes+1):
             state = environment.reset()
             action = environment.select_action_from_policy(state)
