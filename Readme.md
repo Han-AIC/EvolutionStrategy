@@ -10,6 +10,9 @@ can independently evolve.
 * Choice of either averaging params from the elite group after population has
 been evaluated (Original Implementation), or of recombining and perturbing elite group params stochastically.
 
+* Covariance approximation currently implemented requires large population. Alternative method:
+
+
 ## Algorithm Outline
 
 1. Along the param space, generate a number of progenitors with binned params.

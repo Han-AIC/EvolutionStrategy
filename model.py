@@ -12,7 +12,7 @@ class Model(nn.Module):
 
   def __init__(self, structural_definition):
     super(Model, self).__init__()
-    self.seed = torch.manual_seed(0)
+    self.seed = torch.manual_seed(random.randint(0, 99999))
     self.layers = []
 
     for layer in structural_definition:
