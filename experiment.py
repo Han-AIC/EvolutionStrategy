@@ -41,8 +41,16 @@ class EvoStrat_Experiment:
         self.GENERATIONS = 20
         self.MAX_STEPS = 800
         self.num_episodes = 20
-        self.population_size = 200
+
+        self.population_size = 250
+        self.population_size_decay = 0.99
+        self.minimum_population_size = 100
+
         self.elite_proportion = 0.05
+
+        self.step_size = 0.4
+        self.step_size_decay = 0.99
+        self.minimum_step_size = 0.1
 
         self.lr_mean = 0.1
 
@@ -63,10 +71,19 @@ class EvoStrat_Experiment:
             self.evaluate_one_generation(gen_idx)
             self.select_top_performers(gen_idx, self.elite_proportion)
             next_means = self.calculate_next_means(gen_idx, current_means)
-            self.cull_non_elite(gen_idx)
-            self.populations[gen_idx + 1] = self.spawner.generate_population(next_means)
+
+            step_size = max(self.step_size, self.minimum_step_size)
+            self.step_size *= self.step_size_decay
+
+            self.populations[gen_idx + 1] = self.spawner.generate_population(next_means, step_size)
+
+            population_size = max(self.population_size, self.minimum_population_size)
+            self.population_size = int(self.population_size * self.population_size_decay)
+            self.spawner.update_pop_size(self.population_size)
+
             current_means = next_means
             print('\rGeneration {}\tAverage Elite Score: {:.2f}\tAverage Whole Population Score: {:.2f}'.format(gen_idx, self.average_elite_performance(gen_idx), self.average_whole_performance(gen_idx)))
+            self.cull_non_elite(gen_idx)
 
     def cull_non_elite(self, gen_idx):
         elite_indices = [x[0] for x in self.population_elites[gen_idx]]
@@ -145,7 +162,8 @@ class EvoStrat_Experiment:
         return mean_state_dict
 
     def _prep_base_state_dict(self):
-        base_state_dict = self.populations[0][0].state_dict()
+        template_idx = list(self.populations[0].keys())[0]
+        base_state_dict = self.populations[0][template_idx].state_dict()
         for layer in base_state_dict:
             zeroes = torch.from_numpy(np.zeros(base_state_dict[layer].shape))
             base_state_dict.update({layer: zeroes})
