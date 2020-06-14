@@ -25,16 +25,16 @@ class Spawner:
             population.update({i: member})
         return population
 
-    def generate_population(self, mean):
+    def generate_population(self, mean, cov):
         population = {}
         for i in range(self.pop_size):
             member = Model(self.model_structure)
-            sampled_state_dict = self.resample_member_state_dict(member, mean)
+            sampled_state_dict = self.resample_member_state_dict(member, mean, cov)
             member.load_state_dict(sampled_state_dict)
             population.update({i: member})
         return population
 
-    def resample_member_state_dict(self, member, mean):
+    def resample_member_state_dict(self, member, mean, cov):
         state_dict = member.state_dict()
         for layer in state_dict:
             shape = state_dict[layer].shape
@@ -43,8 +43,21 @@ class Spawner:
                 for i, param_arr in enumerate(mean[layer]):
                     for j, param in enumerate(mean[layer][i]):
                         base[i][j] = np.random.normal(mean[layer][i][j], 0.2)
+                        # base[i][j] = np.random.normal(mean[layer][i][j], cov[layer][i][j])
             else:
                 for i, param in enumerate(mean[layer]):
                     base[i] = np.random.normal(mean[layer][i], 0.2)
+                    # base[i] = np.random.normal(mean[layer][i], cov[layer][i])
             state_dict[layer] = torch.from_numpy(base)
         return state_dict
+
+
+
+
+
+
+
+            # sampled_weights = torch.from_numpy(np.zeros(mean, step_size, shape))
+        #     state_dict.update({layer: sampled_weights})
+        # member.load_state_dict(state_dict)
+        # return member
