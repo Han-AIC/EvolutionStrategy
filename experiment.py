@@ -18,7 +18,6 @@ import copy
 from joblib import Parallel, delayed
 import multiprocessing
 
-
 from spawn import Spawner
 from environment import Environment
 from collections import defaultdict
@@ -39,17 +38,17 @@ class EvoStrat_Experiment:
         self.STATE_SPACE = gym.make(env_name).observation_space.shape[0]
         self.ACTION_SPACE = gym.make(env_name).action_space.n
         self.GENERATIONS = 20
-        self.MAX_STEPS = 800
+        self.MAX_STEPS = 1000
         self.num_episodes = 20
 
         self.population_size = 250
-        self.population_size_decay = 0.99
+        self.population_size_decay = 0.999
         self.minimum_population_size = 100
 
         self.elite_proportion = 0.05
 
         self.step_size = 0.4
-        self.step_size_decay = 0.99
+        self.step_size_decay = 0.95
         self.minimum_step_size = 0.1
 
         self.lr_mean = 0.1
@@ -125,6 +124,7 @@ class EvoStrat_Experiment:
                                 gen_idx):
         self.population_performance[gen_idx] = defaultdict()
         for member_idx in self.populations[gen_idx]:
+            # print('\rGeneration {}\tAverage Elite Score: {:.2f}\tAverage Whole Population Score: {:.2f}'.format(gen_idx, self.average_elite_performance(gen_idx), self.average_whole_performance(gen_idx)))
             self.evaluate_one_member(gen_idx,
                                      member_idx)
 

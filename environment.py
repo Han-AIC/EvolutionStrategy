@@ -23,7 +23,7 @@ class Environment:
                     action_shape (int): The number of legitimate actions in env.
         """
         self.model = model
-        self.env = gym.make('CartPole-v1')
+        self.env = gym.make('LunarLander-v2')
         self.current_state = self.env.reset()
         self.state_shape = self.env.observation_space.shape
         self.action_shape = self.env.action_space.n

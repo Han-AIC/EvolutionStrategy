@@ -10,14 +10,14 @@ class Spawner:
                 output_dim):
         self.pop_size = pop_size
         self.model_structure = {"0":{"layer_size_mapping": {"in_features": input_dim,
-                                                            "out_features": 16},
+                                                            "out_features": 64},
                                    "layer_type": "linear",
                                    "activation": "relu"},
-                                "1":{"layer_size_mapping": {"in_features": 16,
+                                "1":{"layer_size_mapping": {"in_features": 64,
                                                            "out_features": output_dim},
                                    "layer_type": "linear",
                                    "activation": "nil"}}
-                                   
+
     def update_pop_size(self, population_size):
         self.pop_size = population_size
 
