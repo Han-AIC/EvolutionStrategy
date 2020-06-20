@@ -31,7 +31,7 @@ class Environment:
 
     def render_env(self):
         self.env.render()
-        time.sleep(0.1)
+        time.sleep(0.05)
 
     def select_action_from_policy(self, state):
         """
