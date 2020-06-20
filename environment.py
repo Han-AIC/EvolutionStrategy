@@ -2,6 +2,7 @@ import torch
 import random
 import numpy as np
 import gym
+import time
 
 class Environment:
 
@@ -13,7 +14,7 @@ class Environment:
     4. Resets environment using a new novel random seed.
     """
 
-    def __init__(self, model):
+    def __init__(self, model, env_name):
         """
         Attributes:
                     model (nn.module): A PyTorch neural network.
@@ -23,10 +24,14 @@ class Environment:
                     action_shape (int): The number of legitimate actions in env.
         """
         self.model = model
-        self.env = gym.make('LunarLander-v2')
+        self.env = gym.make(env_name)
         self.current_state = self.env.reset()
         self.state_shape = self.env.observation_space.shape
         self.action_shape = self.env.action_space.n
+
+    def render_env(self):
+        self.env.render()
+        time.sleep(0.1)
 
     def select_action_from_policy(self, state):
         """

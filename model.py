@@ -7,14 +7,11 @@ import torch.optim as optim
 from collections import namedtuple, deque, OrderedDict, Counter
 import copy
 
-
 class Model(nn.Module):
-
   def __init__(self, structural_definition):
     super(Model, self).__init__()
-    self.seed = torch.manual_seed(random.randint(0, 99999))
+    self.seed = torch.manual_seed(0)
     self.layers = []
-
     for layer in structural_definition:
         layer_params = structural_definition[layer]
         layer_type = self.parse_layer_type(layer_params['layer_type'])
@@ -39,10 +36,18 @@ class Model(nn.Module):
           return nn.Linear
       elif layer_type == "batchnorm1d":
           return nn.BatchNorm1d
+      elif layer_type == "batchnorm2d":
+          return nn.BatchNorm2d
+      elif layer_type == "maxpool1d":
+          return nn.MaxPool1d
+      elif layer_type == "maxpool2d":
+          return nn.MaxPool2d
       elif layer_type == 'conv1d':
           return nn.Conv1d
       elif layer_type == 'conv2d':
           return nn.Conv2d
+      elif layer_type == 'flatten':
+          return nn.Flatten
       else:
           raise ValueError("Specified layer type is currently not supported!")
 
@@ -58,8 +63,6 @@ class Model(nn.Module):
           return torch.sigmoid
       elif activation == "relu":
           return torch.relu
-      elif activation == "softmax":
-          return torch.softmax
       elif activation == "nil":
           return None
       else:

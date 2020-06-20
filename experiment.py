@@ -1,3 +1,4 @@
+import os
 import sys
 import gym
 import numpy as np
@@ -22,6 +23,8 @@ from spawn import Spawner
 from environment import Environment
 from collections import defaultdict
 
+from tqdm import tqdm, tnrange, tqdm_notebook
+
 class EvoStrat_Experiment:
 
     """
@@ -33,36 +36,42 @@ class EvoStrat_Experiment:
     """
 
     def __init__(self,
-                 env_name):
+                 experiment_params):
 
-        self.STATE_SPACE = gym.make(env_name).observation_space.shape[0]
-        self.ACTION_SPACE = gym.make(env_name).action_space.n
-        self.GENERATIONS = 20
-        self.MAX_STEPS = 1000
-        self.num_episodes = 20
+        self.env_name = experiment_params['env_name']
+        self.model_structure = experiment_params['model_structure']
 
-        self.population_size = 250
-        self.population_size_decay = 0.999
-        self.minimum_population_size = 100
-
-        self.elite_proportion = 0.05
-
-        self.step_size = 0.4
-        self.step_size_decay = 0.95
-        self.minimum_step_size = 0.1
-
-        self.lr_mean = 0.1
+        self.STATE_SPACE = gym.make(self.env_name).observation_space.shape[0]
+        self.ACTION_SPACE = gym.make(self.env_name).action_space.n
+        self.GENERATIONS = experiment_params['GENERATIONS']
+        self.MAX_STEPS = experiment_params['MAX_STEPS']
+        self.num_episodes = experiment_params['num_episodes']
+        self.population_size = experiment_params['population_size']
+        self.population_size_decay = experiment_params['population_size_decay']
+        self.minimum_population_size = experiment_params['minimum_population_size']
+        self.elite_proportion = experiment_params['elite_proportion']
+        self.step_size = experiment_params['step_size']
+        self.step_size_decay = experiment_params['step_size_decay']
+        self.minimum_step_size = experiment_params['minimum_step_size']
+        self.lr_mean = experiment_params['lr_mean']
 
         self.spawner = Spawner(self.population_size,
                                self.STATE_SPACE,
-                               self.ACTION_SPACE)
+                               self.ACTION_SPACE,
+                               self.model_structure)
 
         self.populations = defaultdict()
         self.population_elites = defaultdict()
         self.population_performance = defaultdict()
         self.means = []
 
+        self.best_performer = {'gen_idx': 0,
+                                'member_idx': 0,
+                                'performance': 0}
+
     def run_experiment(self):
+        pbar_overall = tqdm(total=self.GENERATIONS, desc='Generations', leave=True)
+
         self.populations[0] = self.spawner.generate_initial_population()
         current_means = self.calculate_population_means(0)
         for gen_idx in range(self.GENERATIONS):
@@ -83,6 +92,30 @@ class EvoStrat_Experiment:
             current_means = next_means
             print('\rGeneration {}\tAverage Elite Score: {:.2f}\tAverage Whole Population Score: {:.2f}'.format(gen_idx, self.average_elite_performance(gen_idx), self.average_whole_performance(gen_idx)))
             self.cull_non_elite(gen_idx)
+            self.select_best_performer(gen_idx)
+
+            pbar_overall.update(1)
+            print("========================")
+
+        self.save_best_performer()
+        return str(int(self.best_performer['performance']))
+
+    def select_best_performer(self, gen_idx):
+        for elite in self.population_elites[gen_idx]:
+            if elite[1] > self.best_performer['performance']:
+                self.best_performer = {'gen_idx': gen_idx,
+                                        'member_idx': elite[0],
+                                        'performance': elite[1]}
+
+    def save_best_performer(self):
+        print("========================")
+        print("Best Performer")
+        print(self.best_performer)
+        model_state = self.populations[self.best_performer['gen_idx']][self.best_performer['member_idx']].state_dict()
+        SOLUTION_PATH = './solutions/' + self.env_name + '_' + str(int(self.best_performer['performance']))
+        if not os.path.exists(SOLUTION_PATH):
+        	os.makedirs(SOLUTION_PATH)
+        torch.save(model_state, SOLUTION_PATH + '/solution.pth')
 
     def cull_non_elite(self, gen_idx):
         elite_indices = [x[0] for x in self.population_elites[gen_idx]]
@@ -123,16 +156,17 @@ class EvoStrat_Experiment:
     def evaluate_one_generation(self,
                                 gen_idx):
         self.population_performance[gen_idx] = defaultdict()
+        pbar_within_generation = tqdm(total=len(self.populations[gen_idx].keys()), desc='Members', leave=False)
         for member_idx in self.populations[gen_idx]:
-            # print('\rGeneration {}\tAverage Elite Score: {:.2f}\tAverage Whole Population Score: {:.2f}'.format(gen_idx, self.average_elite_performance(gen_idx), self.average_whole_performance(gen_idx)))
             self.evaluate_one_member(gen_idx,
                                      member_idx)
+            pbar_within_generation.update(1)
 
     def evaluate_one_member(self,
                             gen_idx,
                             member_idx):
         current_member = self.populations[gen_idx][member_idx]
-        environment = Environment(current_member)
+        environment = Environment(current_member, self.env_name)
         reward_window = deque(maxlen=30)
         for episode_idx in range(1, self.num_episodes+1):
             state = environment.reset()
